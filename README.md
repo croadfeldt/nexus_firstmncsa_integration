@@ -1,0 +1,3 @@
+This project was created to help bridge the frc.nexus tool and the MN CSA crew tools. The initial implementation will take the nexus reports into the nexus channel and open tickets for the MN CSA crew using their tooling. My intent is to bridge the gap and allow teams to use a single tool, nexus, for all volunteer and game interactions where possible while also ensuring that the MN CSA crew are able to use the tools they are familiar with.
+
+My long term goal would be to improve the frc.nexus tool by implementing appropriate aspects of the MN CSA tooling.
