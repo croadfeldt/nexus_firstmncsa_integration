@@ -47,18 +47,35 @@ def message_hello(message, say):
     if ('subtype','bot_message') in message.items():
         print("Message from a bot: {}".format(message['bot_id']))
 
-        # Prep the requests object used to post this to the firstmn.csa web form
-        webform = {
-            'title': message['text'],
-            'teamNumber': message['text'].split()[-1],
-            'frcEvent': frcEventName,
-            'priority': 'Medium',
-            'description': "\n".join(list(map(get_block_text, message['blocks']))),
-            'contactName': 'Nexus - FTA',
-            'contactEmail': 'firstmn.csa@gmail.com',
-            'problemCategory': 'Other or not sure',
-            'attachments': []
-        }
+        if "requested help" in message['text']:
+            # Prep the requests object used to post this to the firstmn.csa web form
+            webform = {
+                'title': message['text'],
+                'teamNumber': message['text'].split()[1],
+                'frcEvent': frcEventName,
+                'priority': 'Medium',
+                'description': "\n".join(list(map(get_block_text, message['blocks']))),
+                'contactName': 'Nexus - FTA',
+                'contactEmail': 'firstmn.csa@gmail.com',
+                'problemCategory': 'Other or not sure',
+                'attachments': []
+            }
+        elif "FTA request" in message['text']:
+            # Prep the requests object used to post this to the firstmn.csa web form
+            webform = {
+                'title': message['text'],
+                'teamNumber': message['text'].split()[-1],
+                'frcEvent': frcEventName,
+                'priority': 'Medium',
+                'description': "\n".join(list(map(get_block_text, message['blocks']))),
+                'contactName': 'Nexus - FTA',
+                'contactEmail': 'firstmn.csa@gmail.com',
+                'problemCategory': 'Other or not sure',
+                'attachments': []
+            }
+        else:
+            print("Unrecognized message, please tell Chris");
+            stop();
 
         headers = {'Content-type': 'application/json',
             'API-Key': firstmncsa['api_key']}
