@@ -75,7 +75,7 @@ def message_hello(message, say):
             }
         else:
             print("Unrecognized message, please tell Chris");
-            stop();
+            return();
 
         headers = {'Content-type': 'application/json',
             'API-Key': firstmncsa['api_key']}
