@@ -1,6 +1,7 @@
 import os
 import pprint
 import requests
+import re
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
@@ -51,7 +52,7 @@ def message_hello(message, say):
             # Prep the requests object used to post this to the firstmn.csa web form
             webform = {
                 'title': message['text'],
-                'teamNumber': message['text'].split()[1],
+                'teamNumber': re.search(r"\d+",message['text']).group(),
                 'frcEvent': frcEventName,
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
@@ -64,7 +65,7 @@ def message_hello(message, say):
             # Prep the requests object used to post this to the firstmn.csa web form
             webform = {
                 'title': message['text'],
-                'teamNumber': message['text'].split()[-1],
+                'teamNumber': re.search(r"\d+",message['text']).group(),
                 'frcEvent': frcEventName,
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
