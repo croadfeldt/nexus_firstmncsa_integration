@@ -21,7 +21,6 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 firstmncsa = {}
 
 # Grab the environment variables needed
-frcEventName = os.environ['FRC_EVENT_NAME']
 firstmncsa['api_key'] = os.environ['FIRSTMNCSA_API_KEY']
 firstmncsa['url'] = os.environ['FIRSTMNCSA_URL']
 firstmncsa['api_endpoint'] = os.environ['FIRSTMNCSA_API_ENDPOINT']
