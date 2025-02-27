@@ -93,7 +93,7 @@ def message_hello(message, say):
         pprint.pp(webform)
 
         # Post the data to the First MN CSA
-        resp = requests.post(url=firstmncsa['url'], headers=headers, json=webform)
+        resp = requests.post(url=firstmncsa['api_endpoint'], headers=headers, json=webform)
 
         # How did that go?
         print("Response from web form submission: %s" % resp.text)
