@@ -26,6 +26,15 @@ firstmncsa['api_key'] = os.environ['FIRSTMNCSA_API_KEY']
 firstmncsa['url'] = os.environ['FIRSTMNCSA_URL']
 firstmncsa['api_endpoint'] = os.environ['FIRSTMNCSA_API_ENDPOINT']
 
+eventMap={'C070UJW0X46':'Off Season',
+          'C070SC5LGB1':'Duluth - Northern Lights',
+          'C0716UMRGEN':'Duluth - Lake Superior',
+          'C070SCBQM2T':'10,000 Lakes',
+          'C0716RAMJQ3':'Granite City',
+          'C08F36XRR4L':'North Star',
+          'C0716UR6BEW':'Great Northern'
+          }
+
 # Install the Slack app and get xoxb- token in advance
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
@@ -53,7 +62,7 @@ def message_hello(message, say):
             webform = {
                 'title': message['text'],
                 'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': frcEventName,
+                'frcEvent': eventMap[message['channel']],
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
                 'contactName': 'Nexus - FTA',
@@ -66,7 +75,7 @@ def message_hello(message, say):
             webform = {
                 'title': message['text'],
                 'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': frcEventName,
+                'frcEvent': eventMap[message['channel']],
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
                 'contactName': 'Nexus - FTA',
