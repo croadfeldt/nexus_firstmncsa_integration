@@ -2,6 +2,7 @@ import os
 import pprint
 import requests
 import re
+import datetime
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
@@ -34,6 +35,17 @@ eventMap={'C070UJW0X46':'Off Season',
           'C0716UR6BEW':'Great Northern'
           }
 
+# Get the current date and time
+now = datetime.datetime.now()
+
+# Create a datetime object representing the current date and time
+
+# Display a message indicating what is being printed
+print("Current date and time : ")
+
+# Print the current date and time in a specific format
+print(now.strftime("%Y-%m-%d %H:%M:%S"))
+
 # Install the Slack app and get xoxb- token in advance
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
@@ -44,17 +56,19 @@ app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
 # Function to grab data from blocks.
 def get_block_text(block):
+    print(now.strftime("%Y-%m-%d %H:%M:%S"))
     pprint.pp(block)
     return str(block['text']['text'])
 
 # Look for CSA Requests
 @app.message('')
 def message_hello(message, say):
+    print(now.strftime("%Y-%m-%d %H:%M:%S"))
     pprint.pp(message)
 
     # Check to see if the message was sent by a bot
     if ('subtype','bot_message') in message.items():
-        print("Message from a bot: {}".format(message['bot_id']))
+        print(now.strftime("%Y-%m-%d %H:%M:%S") .": Message from a bot: {}".format(message['bot_id']))
 
         if "requested help" in message['text']:
             # Prep the requests object used to post this to the firstmn.csa web form
@@ -83,20 +97,20 @@ def message_hello(message, say):
                 'attachments': []
             }
         else:
-            print("Unrecognized message, please tell Chris");
+            print(now.strftime("%Y-%m-%d %H:%M:%S") .": Unrecognized message, please tell Chris");
             return();
 
         headers = {'Content-type': 'application/json',
             'API-Key': firstmncsa['api_key']}
 
-        print("Posting form to URL: {}".format(firstmncsa['api_endpoint']))
+        print(now.strftime("%Y-%m-%d %H:%M:%S") .": Posting form to URL: {}".format(firstmncsa['api_endpoint']))
         pprint.pp(webform)
 
         # Post the data to the First MN CSA
         resp = requests.post(url=firstmncsa['api_endpoint'], headers=headers, json=webform)
 
         # How did that go?
-        print("Response from web form submission: %s" % resp.text)
+        print(now.strftime("%Y-%m-%d %H:%M:%S") .": Response from web form submission: %s" % resp.text)
 
         # Let the world know it was submitted.
         say("Message report status: {}".format(resp.text))
