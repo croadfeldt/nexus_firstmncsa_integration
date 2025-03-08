@@ -68,7 +68,7 @@ def message_hello(message, say):
 
     # Check to see if the message was sent by a bot
     if ('subtype','bot_message') in message.items():
-        print(now.strftime("%Y-%m-%d %H:%M:%S") .": Message from a bot: {}".format(message['bot_id']))
+        print("{}: Message from a bot: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"),message['bot_id']))
 
         if "requested help" in message['text']:
             # Prep the requests object used to post this to the firstmn.csa web form
@@ -97,20 +97,20 @@ def message_hello(message, say):
                 'attachments': []
             }
         else:
-            print(now.strftime("%Y-%m-%d %H:%M:%S") .": Unrecognized message, please tell Chris");
+            print("{}: Unrecognized message, please tell Chris".format(now.strftime("%Y-%m-%d %H:%M:%S"));
             return();
 
         headers = {'Content-type': 'application/json',
             'API-Key': firstmncsa['api_key']}
 
-        print(now.strftime("%Y-%m-%d %H:%M:%S") .": Posting form to URL: {}".format(firstmncsa['api_endpoint']))
+                  print("{}: Posting form to URL: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"),firstmncsa['api_endpoint']))
         pprint.pp(webform)
 
         # Post the data to the First MN CSA
         resp = requests.post(url=firstmncsa['api_endpoint'], headers=headers, json=webform)
 
         # How did that go?
-        print(now.strftime("%Y-%m-%d %H:%M:%S") .": Response from web form submission: %s" % resp.text)
+                  print("{}: Response from web form submission: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"),resp.text)
 
         # Let the world know it was submitted.
         say("Message report status: {}".format(resp.text))
