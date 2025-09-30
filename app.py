@@ -34,7 +34,7 @@ eventMap={'C070UJW0X46':'Off Season',
           'C08F36XRR4L':'North Star',
           'C0716UR6BEW':'Great Northern',
           'C0716TNHADQ':'State',
-          'C07142699HB':'Off Season'
+          'C07142699HB':'Off Season' # Nexus-MRI-Rise
           }
 
 # Get the current date and time
