@@ -33,7 +33,8 @@ eventMap={'C070UJW0X46':'Off Season',
           'C0716RAMJQ3':'Granite City',
           'C08F36XRR4L':'North Star',
           'C0716UR6BEW':'Great Northern',
-          'C0716TNHADQ':'State'
+          'C0716TNHADQ':'State',
+          'C07142699HB':'Off Season'
           }
 
 # Get the current date and time
