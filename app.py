@@ -26,15 +26,18 @@ firstmncsa['api_key'] = os.environ['FIRSTMNCSA_API_KEY']
 firstmncsa['url'] = os.environ['FIRSTMNCSA_URL']
 firstmncsa['api_endpoint'] = os.environ['FIRSTMNCSA_API_ENDPOINT']
 
-eventMap={'C070UJW0X46':'Off Season',
-          'C070SC5LGB1':'Duluth - Northern Lights',
-          'C0716UMRGEN':'Duluth - Lake Superior',
-          'C070SCBQM2T':'10,000 Lakes',
-          'C0716RAMJQ3':'Granite City',
-          'C08F36XRR4L':'North Star',
-          'C0716UR6BEW':'Great Northern',
-          'C0716TNHADQ':'State'
-          }
+eventMap={
+    'C070UJW0X46':'Off Season', # nexus
+    'C070SC5LGB1':'Duluth - Northern Lights',
+    'C0716UMRGEN':'Duluth - Lake Superior',
+    'C070SCBQM2T':'10,000 Lakes',
+    'C0716RAMJQ3':'Granite City',
+    'C08F36XRR4L':'North Star',
+    'C0716UR6BEW':'Great Northern',
+    'C0716TNHADQ':'State',
+    'C07142699HB':'Off Season', # nexus-MRI-Rise
+    'C071VN7D5J4':'Off Season', # nexus-mmr
+}
 
 # Get the current date and time
 now = datetime.datetime.now()
