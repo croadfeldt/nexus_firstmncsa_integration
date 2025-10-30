@@ -27,6 +27,7 @@ firstmncsa['url'] = os.environ['FIRSTMNCSA_URL']
 firstmncsa['api_endpoint'] = os.environ['FIRSTMNCSA_API_ENDPOINT']
 
 eventMap={'C070UJW0X46':'Off Season',
+          'C071VN7D5J4':'Off Season',
           'C070SC5LGB1':'Duluth - Northern Lights',
           'C0716UMRGEN':'Duluth - Lake Superior',
           'C070SCBQM2T':'10,000 Lakes',
@@ -73,7 +74,7 @@ def message_hello(message, say):
             webform = {
                 'title': message['text'],
                 'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': eventMap[message['channel']],
+                'frcEvent': eventMap.get(message['channel'], 'Off Season'),
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
                 'contactName': 'Nexus - FTA',
@@ -86,7 +87,7 @@ def message_hello(message, say):
             webform = {
                 'title': message['text'],
                 'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': eventMap[message['channel']],
+                'frcEvent': eventMap.get(message['channel'], 'Off Season'),
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
                 'contactName': 'Nexus - FTA',
