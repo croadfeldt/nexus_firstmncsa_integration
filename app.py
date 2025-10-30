@@ -76,7 +76,7 @@ def message_hello(message, say):
             webform = {
                 'title': message['text'],
                 'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': eventMap[message['channel']],
+                'frcEvent': eventMap.get(message['channel'], 'Off Season'),
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
                 'contactName': 'Nexus - FTA',
@@ -89,7 +89,7 @@ def message_hello(message, say):
             webform = {
                 'title': message['text'],
                 'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': eventMap[message['channel']],
+                'frcEvent': eventMap.get(message['channel'], 'Off Season'),
                 'priority': 'Medium',
                 'description': "\n".join(list(map(get_block_text, message['blocks']))),
                 'contactName': 'Nexus - FTA',
