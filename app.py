@@ -34,6 +34,7 @@ eventMap={
     'C0716RAMJQ3':'Granite City',
     'C08F36XRR4L':'North Star',
     'C0716UR6BEW':'Great Northern',
+    'C0A0X0LV42C':'Bluff Country',
     'C0716TNHADQ':'State',
     'C07142699HB':'Off Season', # nexus-MRI-Rise
     'C071VN7D5J4':'Off Season', # nexus-mmr
