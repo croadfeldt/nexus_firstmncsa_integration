@@ -107,10 +107,13 @@ def message_hello(message, say):
 
     msg_text = message.get('text', '')
 
-    if "requested help" in msg_text:
+    # Order matters - volunteer check must come before generic "has requested help"
+    if "volunteer has requested help" in msg_text:
         contact_name = 'Nexus - Volunteer'
     elif "FTA request" in msg_text:
         contact_name = 'Nexus - FTA'
+    elif "has requested help" in msg_text:
+        contact_name = 'Nexus - Team'
     else:
         log("Unrecognized bot message, please tell Chris")
         log_debug("Unrecognized message text: {}".format(msg_text))
