@@ -12,6 +12,9 @@ firstmncsa['api_key'] = os.environ['FIRSTMNCSA_API_KEY']
 firstmncsa['url'] = os.environ['FIRSTMNCSA_URL']
 firstmncsa['api_endpoint'] = os.environ['FIRSTMNCSA_API_ENDPOINT']
 
+# Debug logging - defaults to on, set DEBUG=false to disable
+DEBUG = os.environ.get('DEBUG', 'true').lower() == 'true'
+
 eventMap = {
     'C070UJW0X46': 'Off Season',
     'C070SC5LGB1': 'Duluth - Northern Lights',
@@ -28,19 +31,44 @@ eventMap = {
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
 
-def get_block_text(block):
+def log(msg):
     now = datetime.datetime.now()
-    print("{}: Processing block:".format(now.strftime("%Y-%m-%d %H:%M:%S")))
-    pprint.pp(block)
+    print("{}: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"), msg))
 
-    # Safely handle blocks that may not have a top-level 'text' dict
-    block_text = block.get('text')
-    if block_text is None:
-        return ''
-    # 'text' can be a dict (rich blocks) or a plain string
-    if isinstance(block_text, dict):
-        return str(block_text.get('text', ''))
-    return str(block_text)
+
+def log_debug(msg, obj=None):
+    if DEBUG:
+        now = datetime.datetime.now()
+        print("{}: [DEBUG] {}".format(now.strftime("%Y-%m-%d %H:%M:%S"), msg))
+        if obj is not None:
+            pprint.pp(obj)
+
+
+def get_block_text(block):
+    block_type = block.get('type')
+    log_debug("Processing block type: {}".format(block_type), block)
+
+    # rich_text blocks have a nested elements structure
+    if block_type == 'rich_text':
+        texts = []
+        for element in block.get('elements', []):
+            for sub in element.get('elements', []):
+                if sub.get('type') == 'text':
+                    texts.append(sub.get('text', ''))
+                elif sub.get('type') == 'link':
+                    texts.append(sub.get('text', ''))
+        return ''.join(texts)
+
+    # section blocks have a top-level 'text' dict
+    elif block_type == 'section':
+        block_text = block.get('text', {})
+        text = block_text.get('text', '')
+        # Unescape Slack's HTML encoding
+        text = text.replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&')
+        return text
+
+    # Ignore other block types (divider, image, actions, etc.)
+    return ''
 
 
 # Silently ignore channel_join and other message subtypes we don't care about
@@ -49,67 +77,94 @@ def handle_channel_join(body, logger):
     logger.debug("Ignoring channel_join event")
 
 
+@app.event({"type": "message", "subtype": "channel_leave"})
+def handle_channel_leave(body, logger):
+    logger.debug("Ignoring channel_leave event")
+
+
+@app.event({"type": "message", "subtype": "message_changed"})
+def handle_message_changed(body, logger):
+    logger.debug("Ignoring message_changed event")
+
+
+@app.event({"type": "message", "subtype": "message_deleted"})
+def handle_message_deleted(body, logger):
+    logger.debug("Ignoring message_deleted event")
+
+
 @app.message('')
 def message_hello(message, say):
-    now = datetime.datetime.now()
+    log_debug("RAW MESSAGE RECEIVED", message)
 
-    print("=" * 60)
-    print("{}: RAW MESSAGE RECEIVED".format(now.strftime("%Y-%m-%d %H:%M:%S")))
-    print("=" * 60)
-    pprint.pp(message)
-    print("=" * 60)
+    subtype = message.get('subtype')
 
-    # Ignore messages with any subtype (joins, leaves, edits, etc.)
-    if message.get('subtype') is not None:
-        print("{}: Ignoring message subtype: {}".format(
-            now.strftime("%Y-%m-%d %H:%M:%S"), message.get('subtype')))
+    # Only process bot_message subtypes, ignore everything else
+    if subtype != 'bot_message':
+        log_debug("Ignoring non-bot message subtype: {}".format(subtype))
         return
 
-    if ('subtype', 'bot_message') in message.items():
-        print("{}: Message from a bot: {}".format(
-            now.strftime("%Y-%m-%d %H:%M:%S"), message['bot_id']))
+    log("Message from bot: {}".format(message.get('bot_id')))
 
-        msg_text = message.get('text', '')
+    msg_text = message.get('text', '')
 
-        if "requested help" in msg_text or "FTA request" in msg_text:
-            team_match = re.search(r"\d+", msg_text)
-            team_number = team_match.group() if team_match else 'Unknown'
+    if "requested help" in msg_text or "FTA request" in msg_text:
+        team_match = re.search(r"team\s+(\d+)", msg_text, re.IGNORECASE)
+        team_number = team_match.group(1) if team_match else 'Unknown'
+        event_name = eventMap.get(message['channel'], 'Off Season')
 
-            webform = {
-                'title': msg_text,
-                'teamNumber': team_number,
-                'frcEvent': eventMap.get(message['channel'], 'Off Season'),
-                'priority': 'Medium',
-                'description': "\n".join(list(map(get_block_text, message.get('blocks', [])))),
-                'contactName': 'Nexus - FTA',
-                'contactEmail': 'firstmn.csa@gmail.com',
-                'problemCategory': 'Other or not sure',
-                'attachments': []
-            }
-        else:
-            print("{}: Unrecognized bot message, please tell Chris".format(
-                now.strftime("%Y-%m-%d %H:%M:%S")))
-            return
+        description = "\n".join(filter(None, map(get_block_text, message.get('blocks', []))))
 
-        headers = {
-            'Content-type': 'application/json',
-            'API-Key': firstmncsa['api_key']
+        webform = {
+            'title': msg_text,
+            'teamNumber': team_number,
+            'frcEvent': event_name,
+            'priority': 'Medium',
+            'description': description,
+            'contactName': 'Nexus - FTA',
+            'contactEmail': 'firstmn.csa@gmail.com',
+            'problemCategory': 'Other or not sure',
+            'attachments': []
         }
 
-        print("{}: Posting form to URL: {}".format(
-            now.strftime("%Y-%m-%d %H:%M:%S"), firstmncsa['api_endpoint']))
-        pprint.pp(webform)
-
-        resp = requests.post(url=firstmncsa['api_endpoint'], headers=headers, json=webform)
-
-        print("{}: Response from web form submission: {}".format(
-            now.strftime("%Y-%m-%d %H:%M:%S"), resp.text))
-
-        say("Message report status: {}".format(resp.text))
+        log_debug("Webform payload:", webform)
 
     else:
-        print("{}: Message was not from a bot, ignoring.".format(
-            now.strftime("%Y-%m-%d %H:%M:%S")))
+        log("Unrecognized bot message, please tell Chris")
+        log_debug("Unrecognized message text: {}".format(msg_text))
+        return
+
+    headers = {
+        'Content-type': 'application/json',
+        'API-Key': firstmncsa['api_key']
+    }
+
+    log("Posting CSA ticket for team {} at {}".format(team_number, event_name))
+
+    try:
+        resp = requests.post(
+            url=firstmncsa['api_endpoint'],
+            headers=headers,
+            json=webform,
+            timeout=10
+        )
+        resp.raise_for_status()
+        log("CSA ticket created successfully for team {} at {}".format(team_number, event_name))
+        log_debug("API response: {}".format(resp.text))
+        say("✅ CSA ticket created for team {} at {}.".format(team_number, event_name))
+
+    except requests.exceptions.Timeout:
+        log("ERROR: API call timed out for team {} at {}".format(team_number, event_name))
+        say("⚠️ Failed to create CSA ticket for team {} - API timed out. Please submit manually.".format(team_number))
+
+    except requests.exceptions.HTTPError as e:
+        log("ERROR: API returned HTTP error: {}".format(str(e)))
+        log_debug("API error response: {}".format(resp.text))
+        say("⚠️ Failed to create CSA ticket for team {} - API error ({}). Please submit manually.".format(
+            team_number, resp.status_code))
+
+    except requests.exceptions.RequestException as e:
+        log("ERROR: API call failed: {}".format(str(e)))
+        say("⚠️ Failed to create CSA ticket for team {} - Connection error. Please submit manually.".format(team_number))
 
 
 if __name__ == "__main__":
