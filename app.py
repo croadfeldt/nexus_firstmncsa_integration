@@ -107,38 +107,42 @@ def message_hello(message, say):
 
     msg_text = message.get('text', '')
 
-    if "requested help" in msg_text or "FTA request" in msg_text:
-        team_match = re.search(r"team\s+(\d+)", msg_text, re.IGNORECASE)
-        team_number = team_match.group(1) if team_match else 'Unknown'
-        event_name = eventMap.get(message['channel'], 'Off Season')
-
-        description = "\n".join(filter(None, map(get_block_text, message.get('blocks', []))))
-
-        webform = {
-            'title': msg_text,
-            'teamNumber': team_number,
-            'frcEvent': event_name,
-            'priority': 'Medium',
-            'description': description,
-            'contactName': 'Nexus - FTA',
-            'contactEmail': 'firstmn.csa@gmail.com',
-            'problemCategory': 'Other or not sure',
-            'attachments': []
-        }
-
-        log_debug("Webform payload:", webform)
-
+    if "requested help" in msg_text:
+        contact_name = 'Nexus - Volunteer'
+    elif "FTA request" in msg_text:
+        contact_name = 'Nexus - FTA'
     else:
         log("Unrecognized bot message, please tell Chris")
         log_debug("Unrecognized message text: {}".format(msg_text))
         return
+
+    team_match = re.search(r"team\s+(\d+)", msg_text, re.IGNORECASE)
+    team_number = team_match.group(1) if team_match else 'Unknown'
+    event_name = eventMap.get(message['channel'], 'Off Season')
+
+    description = "\n".join(filter(None, map(get_block_text, message.get('blocks', []))))
+
+    webform = {
+        'title': msg_text,
+        'teamNumber': team_number,
+        'frcEvent': event_name,
+        'priority': 'Medium',
+        'description': description,
+        'contactName': contact_name,
+        'contactEmail': 'firstmn.csa@gmail.com',
+        'problemCategory': 'Other or not sure',
+        'attachments': []
+    }
+
+    log_debug("Webform payload:", webform)
 
     headers = {
         'Content-type': 'application/json',
         'API-Key': firstmncsa['api_key']
     }
 
-    log("Posting CSA ticket for team {} at {}".format(team_number, event_name))
+    log("Posting CSA ticket for team {} at {} via {}".format(
+        team_number, event_name, contact_name))
 
     try:
         resp = requests.post(
