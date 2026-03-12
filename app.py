@@ -7,119 +7,110 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 # FIRSTMN.CSA website data
-# WebForm data
-# Form name - cardForm
-# submit button name - submit
-# title - type string - used as title for the issue
-# teamNumber - type int - used as the team number with the issue
-# frcEvent - string - used to identify which event has the team with an issue
-# problemCategory - type list of strings - need mapping if possible, future item
-# priority - type list of strings - set to medium for now
-# description - type long string - used for additional details, drop all text in here for now
-# attachments - binary data - used for additional contextual information in form of photos, video, etc...
-# contactName - string - used to indicate who is reporting the issue
-# contactEmail - string - used to indicate who is reporting the issue
 firstmncsa = {}
-
-# Grab the environment variables needed
 firstmncsa['api_key'] = os.environ['FIRSTMNCSA_API_KEY']
 firstmncsa['url'] = os.environ['FIRSTMNCSA_URL']
 firstmncsa['api_endpoint'] = os.environ['FIRSTMNCSA_API_ENDPOINT']
 
-eventMap={
-    'C070UJW0X46':'Off Season', # nexus
-    'C070SC5LGB1':'Duluth - Northern Lights',
-    'C0716UMRGEN':'Duluth - Lake Superior',
-    'C070SCBQM2T':'10,000 Lakes',
-    'C0716RAMJQ3':'Granite City',
-    'C08F36XRR4L':'North Star',
-    'C0716UR6BEW':'Great Northern',
-    'C0A0X0LV42C':'Bluff Country',
-    'C0716TNHADQ':'State',
-    'C07142699HB':'Off Season', # nexus-MRI-Rise
-    'C071VN7D5J4':'Off Season', # nexus-mmr
+eventMap = {
+    'C070UJW0X46': 'Off Season',
+    'C070SC5LGB1': 'Duluth - Northern Lights',
+    'C0716UMRGEN': 'Duluth - Lake Superior',
+    'C070SCBQM2T': '10,000 Lakes',
+    'C0716RAMJQ3': 'Granite City',
+    'C08F36XRR4L': 'North Star',
+    'C0716UR6BEW': 'Great Northern',
+    'C0716TNHADQ': 'State',
+    'C07142699HB': 'Off Season',
+    'C071VN7D5J4': 'Off Season',
 }
 
-# Get the current date and time
-now = datetime.datetime.now()
-
-# Create a datetime object representing the current date and time
-
-# Display a message indicating what is being printed
-print("Current date and time: {}".format(now.strftime("%Y-%m-%d %H:%M:%S")))
-
-# Install the Slack app and get xoxb- token in advance
 app = App(token=os.environ["SLACK_BOT_TOKEN"])
 
-#@app.message("hello")
-#def message_hello(message, say):
-#    # say() sends a message to the channel where the event was triggered
-#    say(f"Hey there <@{message['user']}>!")
 
-# Function to grab data from blocks.
 def get_block_text(block):
-    print(now.strftime("%Y-%m-%d %H:%M:%S"))
+    now = datetime.datetime.now()
+    print("{}: Processing block:".format(now.strftime("%Y-%m-%d %H:%M:%S")))
     pprint.pp(block)
-    return str(block['text']['text'])
 
-# Look for CSA Requests
+    # Safely handle blocks that may not have a top-level 'text' dict
+    block_text = block.get('text')
+    if block_text is None:
+        return ''
+    # 'text' can be a dict (rich blocks) or a plain string
+    if isinstance(block_text, dict):
+        return str(block_text.get('text', ''))
+    return str(block_text)
+
+
+# Silently ignore channel_join and other message subtypes we don't care about
+@app.event({"type": "message", "subtype": "channel_join"})
+def handle_channel_join(body, logger):
+    logger.debug("Ignoring channel_join event")
+
+
 @app.message('')
 def message_hello(message, say):
-    print(now.strftime("%Y-%m-%d %H:%M:%S"))
+    now = datetime.datetime.now()
+
+    print("=" * 60)
+    print("{}: RAW MESSAGE RECEIVED".format(now.strftime("%Y-%m-%d %H:%M:%S")))
+    print("=" * 60)
     pprint.pp(message)
+    print("=" * 60)
 
-    # Check to see if the message was sent by a bot
-    if ('subtype','bot_message') in message.items():
-        print("{}: Message from a bot: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"),message['bot_id']))
+    # Ignore messages with any subtype (joins, leaves, edits, etc.)
+    if message.get('subtype') is not None:
+        print("{}: Ignoring message subtype: {}".format(
+            now.strftime("%Y-%m-%d %H:%M:%S"), message.get('subtype')))
+        return
 
-        if "requested help" in message['text']:
-            # Prep the requests object used to post this to the firstmn.csa web form
+    if ('subtype', 'bot_message') in message.items():
+        print("{}: Message from a bot: {}".format(
+            now.strftime("%Y-%m-%d %H:%M:%S"), message['bot_id']))
+
+        msg_text = message.get('text', '')
+
+        if "requested help" in msg_text or "FTA request" in msg_text:
+            team_match = re.search(r"\d+", msg_text)
+            team_number = team_match.group() if team_match else 'Unknown'
+
             webform = {
-                'title': message['text'],
-                'teamNumber': re.search(r"\d+",message['text']).group(),
+                'title': msg_text,
+                'teamNumber': team_number,
                 'frcEvent': eventMap.get(message['channel'], 'Off Season'),
                 'priority': 'Medium',
-                'description': "\n".join(list(map(get_block_text, message['blocks']))),
-                'contactName': 'Nexus - FTA',
-                'contactEmail': 'firstmn.csa@gmail.com',
-                'problemCategory': 'Other or not sure',
-                'attachments': []
-            }
-        elif "FTA request" in message['text']:
-            # Prep the requests object used to post this to the firstmn.csa web form
-            webform = {
-                'title': message['text'],
-                'teamNumber': re.search(r"\d+",message['text']).group(),
-                'frcEvent': eventMap.get(message['channel'], 'Off Season'),
-                'priority': 'Medium',
-                'description': "\n".join(list(map(get_block_text, message['blocks']))),
+                'description': "\n".join(list(map(get_block_text, message.get('blocks', [])))),
                 'contactName': 'Nexus - FTA',
                 'contactEmail': 'firstmn.csa@gmail.com',
                 'problemCategory': 'Other or not sure',
                 'attachments': []
             }
         else:
-            print("{}: Unrecognized message, please tell Chris".format(now.strftime("%Y-%m-%d %H:%M:%S")));
-            return();
+            print("{}: Unrecognized bot message, please tell Chris".format(
+                now.strftime("%Y-%m-%d %H:%M:%S")))
+            return
 
-        headers = {'Content-type': 'application/json',
-            'API-Key': firstmncsa['api_key']}
+        headers = {
+            'Content-type': 'application/json',
+            'API-Key': firstmncsa['api_key']
+        }
 
-        print("{}: Posting form to URL: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"),firstmncsa['api_endpoint']))
+        print("{}: Posting form to URL: {}".format(
+            now.strftime("%Y-%m-%d %H:%M:%S"), firstmncsa['api_endpoint']))
         pprint.pp(webform)
 
-        # Post the data to the First MN CSA
         resp = requests.post(url=firstmncsa['api_endpoint'], headers=headers, json=webform)
 
-        # How did that go?
-        print("{}: Response from web form submission: {}".format(now.strftime("%Y-%m-%d %H:%M:%S"),resp.text))
+        print("{}: Response from web form submission: {}".format(
+            now.strftime("%Y-%m-%d %H:%M:%S"), resp.text))
 
-        # Let the world know it was submitted.
         say("Message report status: {}".format(resp.text))
+
     else:
-        # say() sends a message to the channel where the event was triggered
-        say(f"USER: <@{message['user']}>!")
-        say ("Message was not from Nexus, ignoring.")
+        print("{}: Message was not from a bot, ignoring.".format(
+            now.strftime("%Y-%m-%d %H:%M:%S")))
+
 
 if __name__ == "__main__":
     SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
