@@ -92,6 +92,11 @@ def handle_message_deleted(body, logger):
     logger.debug("Ignoring message_deleted event")
 
 
+@app.event({"type": "message", "subtype": "bot_add"})
+def handle_bot_add(body, logger):
+    logger.debug("Ignoring bot_add event")
+
+
 @app.message('')
 def message_hello(message, say):
     log_debug("RAW MESSAGE RECEIVED", message)
@@ -106,6 +111,22 @@ def message_hello(message, say):
     log("Message from bot: {}".format(message.get('bot_id')))
 
     msg_text = message.get('text', '')
+
+    # Ignore Nexus channel setup/introductory messages
+    if "This channel will receive" in msg_text:
+        log("Ignoring channel setup message from bot {}".format(message.get('bot_id')))
+        return
+
+    # Ignore LRI inspection flag messages (handled by the inspection
+    # team directly via the reinspection channel; no CSA ticket needed)
+    if "has had an inspection item flagged for the LRI" in msg_text:
+        log("Ignoring LRI flag message from bot {}".format(message.get('bot_id')))
+        return
+
+    # Ignore reinspection request messages
+    if "has been flagged for reinspection" in msg_text:
+        log("Ignoring reinspection message from bot {}".format(message.get('bot_id')))
+        return
 
     # Order matters - volunteer check must come before generic "has requested help"
     if "volunteer has requested help" in msg_text:
