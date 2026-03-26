@@ -131,7 +131,7 @@ def message_hello(message, say):
     # Order matters - volunteer check must come before generic "has requested help"
     if "volunteer has requested help" in msg_text:
         contact_name = 'Nexus - Volunteer'
-    elif "FTA has requested help" in msg_text:
+    elif "FTA request for team" in msg_text:
         contact_name = 'Nexus - FTA'
     elif "has requested help" in msg_text:
         contact_name = 'Nexus - Team'
