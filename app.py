@@ -127,8 +127,10 @@ def message_hello(message, say):
         log("Ignoring LRI flag message from bot {}".format(message.get('bot_id')))
         return
 
-    # Ignore reinspection request messages
-    if "has been flagged for reinspection" in msg_text or "requested reinspection" in msg_text:
+    # Ignore reinspection messages (handled by inspection team directly; no CSA ticket needed)
+    if "has been flagged for reinspection" in msg_text or \
+       "requested reinspection" in msg_text or \
+       ("flagged team" in msg_text and "reinspection" in msg_text):
         log("Ignoring reinspection message from bot {}".format(message.get('bot_id')))
         return
 
@@ -137,8 +139,6 @@ def message_hello(message, say):
         contact_name = 'Nexus - Volunteer'
     elif "FTA request for team" in msg_text:
         contact_name = 'Nexus - FTA'
-    elif "flagged team" in msg_text and "reinspection" in msg_text:
-        contact_name = 'Nexus - Inspector'
     elif "has requested help" in msg_text:
         contact_name = 'Nexus - Team'
     else:
