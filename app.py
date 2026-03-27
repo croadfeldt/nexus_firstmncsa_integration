@@ -48,7 +48,7 @@ def get_block_text(block):
     block_type = block.get('type')
     log_debug("Processing block type: {}".format(block_type), block)
 
-    # header blocks have a top-level 'text' dict (same structure as section)
+    # header blocks have a top-level 'text' dict
     if block_type == 'header':
         return block.get('text', {}).get('text', '')
 
@@ -96,6 +96,11 @@ def handle_message_deleted(body, logger):
     logger.debug("Ignoring message_deleted event")
 
 
+@app.event({"type": "message", "subtype": "bot_add"})
+def handle_bot_add(body, logger):
+    logger.debug("Ignoring bot_add event")
+
+
 @app.message('')
 def message_hello(message, say):
     log_debug("RAW MESSAGE RECEIVED", message)
@@ -111,10 +116,26 @@ def message_hello(message, say):
 
     msg_text = message.get('text', '')
 
+    # Ignore Nexus channel setup/introductory messages
+    if "This channel will receive" in msg_text:
+        log("Ignoring channel setup message from bot {}".format(message.get('bot_id')))
+        return
+
+    # Ignore LRI inspection flag messages (handled by the inspection
+    # team directly via the reinspection channel; no CSA ticket needed)
+    if "has had an inspection item flagged for the LRI" in msg_text:
+        log("Ignoring LRI flag message from bot {}".format(message.get('bot_id')))
+        return
+
+    # Ignore reinspection request messages
+    if "has been flagged for reinspection" in msg_text or "requested reinspection" in msg_text:
+        log("Ignoring reinspection message from bot {}".format(message.get('bot_id')))
+        return
+
     # Order matters - volunteer check must come before generic "has requested help"
     if "volunteer has requested help" in msg_text:
         contact_name = 'Nexus - Volunteer'
-    elif "FTA request" in msg_text:
+    elif "FTA request for team" in msg_text:
         contact_name = 'Nexus - FTA'
     elif "flagged team" in msg_text and "reinspection" in msg_text:
         contact_name = 'Nexus - Inspector'
